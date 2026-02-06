@@ -11,63 +11,14 @@ const { userAuth } = require("./middlewares/auth");
 app.use(express.json());
 app.use(cookieParser());
 
-app.post("/signup", async (req, res) => {
-	//creating a new instance of user model
-	// const user = new User({
-	// 	firstName: "Bharathi",
-	// 	lastName: "Raja",
-	// 	emailID: "bharathi@raja.com",
-	// 	password: "bharathi@123",
-	// });
-	// console.log(req.body);
-	// const user = new User(req.body);
-	try {
-		validateSignUpData(req);
+const authRouter = require("./routes/auth");
+const profileRouter = require("./routes/profile");
+const requestRouter = require("./routes/request");
 
-		const { firstName, lastName, emailID, password } = req.body;
+app.use("/", authRouter);
+app.use("/", profileRouter);
+app.use("/", requestRouter);
 
-		const passwordHash = await bcrypt.hash(password, 10);
-
-		const user = new User({
-			firstName,
-			lastName,
-			emailID,
-			password: passwordHash,
-		});
-
-		await user.save();
-		res.send("User added successfully");
-	} catch (err) {
-		res.status(400).send("Error :" + err.message);
-	}
-});
-
-app.post("/login", async (req, res) => {
-	try {
-		const { emailID, password } = req.body;
-
-		const user = await User.findOne({ emailID: emailID });
-
-		if (!user) {
-			throw new Error("Invalid Credentials");
-		}
-		const passwordCompare = await user.validatePassword(password);
-		if (passwordCompare) {
-			const token = await user.getJwt();
-			res.cookie("token", token);
-			res.send("Login Successfuul");
-		} else {
-			throw new Error("Invalid Credentials");
-		}
-	} catch (err) {
-		res.status(404).send("Error:" + err.message);
-	}
-});
-
-app.get("/profile", userAuth, async (req, res) => {
-	const user = req.user;
-	res.send(user);
-});
 
 app.get("/user", async (req, res) => {
 	const useremail = req.body.emailId;
