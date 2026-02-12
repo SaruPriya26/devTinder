@@ -30,8 +30,15 @@ authRouter.post("/signup", async (req, res) => {
 			password: passwordHash,
 		});
 
-		await user.save();
-		res.send("User added successfully");
+		const savedUser = await user.save();
+		const token = await savedUser.getJwt();
+		res.cookie("token", token, {
+			expires: new Date(Date.now() + 8 * 3600000),
+		});
+		res.json({
+			message: "User added successfully",
+			data: savedUser,
+		});
 	} catch (err) {
 		res.status(400).send("Error :" + err.message);
 	}
@@ -44,7 +51,7 @@ authRouter.post("/login", async (req, res) => {
 		const user = await User.findOne({ emailID: emailID });
 
 		if (!user) {
-			throw new Error("Invalid Credentials");
+			res.status(401).send("Please login");
 		}
 		const passwordCompare = await user.validatePassword(password);
 		if (passwordCompare) {
@@ -52,7 +59,7 @@ authRouter.post("/login", async (req, res) => {
 			res.cookie("token", token, {
 				expires: new Date(Date.now() + 8 * 3600000),
 			});
-			res.send("Login Successfuul");
+			res.send(user);
 		} else {
 			throw new Error("Invalid Credentials");
 		}
